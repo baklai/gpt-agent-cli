@@ -11,14 +11,6 @@
     "weather": {
       "command": "node",
       "args": [".\\mcp-servers\\server-weather.js"]
-    },
-    "filesystem": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-filesystem",
-        "/Users/User/Desktop"
-      ]
     }
   }
 }
