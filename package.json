@@ -1,0 +1,29 @@
+{
+  "name": "gpt-agent-cli",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch index.js",
+    "start": "node index.js",
+    "format": "prettier --write \"src/**/*.js\""
+  },
+  "author": "Dmitrii Baklai",
+  "keywords": [
+    "openai",
+    "mcp"
+  ],
+  "license": "MIT",
+  "description": "This is a simple example of how to use the Model Context Protocol (MCP) with the OpenAI API to create a basic client that operates within a chat context",
+  "dependencies": {
+    "@inquirer/prompts": "^7.4.0",
+    "@modelcontextprotocol/sdk": "^1.7.0",
+    "chalk": "^5.4.1",
+    "dotenv": "^16.4.7",
+    "openai": "^4.90.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "prettier": "^3.0.0"
+  }
+}
