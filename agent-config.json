@@ -2,15 +2,15 @@
   "mcpServers": {
     "datetime": {
       "command": "node",
-      "args": [".\\mcp-servers\\server-datetime.js"]
+      "args": ["./mcp-servers/server-datetime.js"]
     },
     "systeminfo": {
       "command": "node",
-      "args": [".\\mcp-servers\\server-systeminfo.js"]
+      "args": ["./mcp-servers/server-systeminfo.js"]
     },
     "weather": {
       "command": "node",
-      "args": [".\\mcp-servers\\server-weather.js"]
+      "args": ["./mcp-servers/server-weather.js"]
     }
   }
 }
