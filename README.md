@@ -15,7 +15,7 @@ This implementation currently supports only text-type tool responses.
 | Key                | Description    |
 | ------------------ | -------------- |
 | `OPENAI_API_KEY`   | OpenAI API Key |
-| `OPENAI_API_MODEL` | Model name     |
+| `OPENAI_API_MODEL` | Model name (default: gpt-3.5-turbo)     |
 
 ## Example Configuration File for Connecting MCP Servers `agent-config.json`
 
