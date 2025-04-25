@@ -34,13 +34,13 @@ async function prinAndAnimation(prefix, text, delay = 100) {
 
 export default class GPTAgent {
   model;
-  openai;
+  client;
   mcphost = null;
   messages = [];
 
   constructor({ apiKey, apiModel = 'gpt-3.5-turbo' }) {
     this.model = apiModel;
-    this.openai = new OpenAI({ apiKey: apiKey });
+    this.client = new OpenAI({ apiKey: apiKey });
     this.mcphost = new MCPHost({ name: 'gpt-mcp-host', version: '1.0.0' });
 
     console.log('\x1b[32m' + GPT_AGENT_MESSAGE + '\x1b[0m');
@@ -70,67 +70,67 @@ export default class GPTAgent {
 
     const listTools = await this.mcpTools();
 
-    const response = await this.openai.chat.completions.create({
+    const response = await this.client.responses.create({
       model: this.model,
-      messages: this.messages,
-      temperature: 0.2,
+      input: this.messages,
       tools: listTools
     });
 
-    const finalText = [];
-    const toolResults = [];
+    if (response.output_text) {
+      this.messages.push({
+        role: 'assistant',
+        content: response.output_text
+      });
 
-    for (const choice of response.choices) {
-      if (choice.message.role === 'assistant' && choice.finish_reason === 'stop') {
-        finalText.push(choice.message.content);
+      return this.messages[this.messages.length - 1].content;
+    }
+
+    for (const output of response.output) {
+      if (output.type !== 'message' && output.type !== 'function_call') {
+        continue;
+      }
+
+      if (output.type === 'message') {
         this.messages.push({
           role: 'assistant',
-          content: choice.message.content
+          content: output.content
+            .filter(item => item.type === 'output_text')
+            .map(item => item.text)
+            .join(' ')
         });
-      } else if (
-        choice.message.role === 'assistant' &&
-        (choice.message?.tool_calls?.length || choice.finish_reason === 'tool_calls')
-      ) {
-        for (const tool of choice.message.tool_calls) {
-          if (!tool?.function?.name) {
-            continue;
-          }
+      }
 
-          const toolName = tool.function.name;
-          const toolArgs = JSON.parse(tool.function.arguments);
+      if (output.type === 'function_call') {
+        this.messages.push(output);
 
-          const toolResult = await this.mcphost.callTool(toolName, toolArgs);
-
-          toolResults.push({ role: 'user', content: toolResult.content });
-
-          finalText.push(
-            `\n\x1b[90m • Calling tool ${toolName} with args ${JSON.stringify(toolArgs)}\x1b[0m\n`
-          );
-        }
-
-        this.messages.push(...toolResults);
-
-        const response = await this.openai.chat.completions.create({
-          model: this.model,
-          temperature: 0.2,
-          messages: this.messages
-        });
+        const toolName = output.name;
+        const toolArgs = JSON.parse(output.arguments);
+        const toolResult = await this.mcphost.callTool(toolName, toolArgs);
 
         this.messages.push({
-          role: 'assistant',
-          content: response.choices[0].message.content
+          type: 'function_call_output',
+          call_id: output.call_id,
+          output: JSON.stringify(toolResult.content)
         });
 
-        finalText.push(
-          response.choices[0].message.role === 'assistant' &&
-            response.choices[0].finish_reason === 'stop'
-            ? response.choices[0].message.content
-            : ''
+        console.log(
+          `\n\x1b[90m • Calling tool ${toolName} with args ${JSON.stringify(toolArgs)}\x1b[0m`
         );
       }
     }
 
-    return finalText.join('\n');
+    const result = await this.client.responses.create({
+      model: this.model,
+      input: this.messages,
+      tools: listTools
+    });
+
+    this.messages.push({
+      role: 'assistant',
+      content: result.output_text
+    });
+
+    return this.messages[this.messages.length - 1].content;
   }
 
   async mcpTools() {
@@ -139,11 +139,9 @@ export default class GPTAgent {
     return listTools.map(tool => {
       return {
         type: 'function',
-        function: {
-          name: tool.name,
-          description: tool.description,
-          parameters: tool.inputSchema
-        }
+        name: tool.name,
+        description: tool.description,
+        parameters: tool.inputSchema
       };
     });
   }
